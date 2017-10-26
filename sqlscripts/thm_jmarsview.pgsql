@@ -10,11 +10,11 @@
   10/2017: CEdwards sync'ing to NAU
 */
 
-create view thmteam.themis_proj_details as 
-       select s.file_id AS file_id, stage, location, 
-              s.projection, ctr_lat, ctr_lon, dn_avg, dn_ignore, dn_min, dn_max, east_lon, line_offset, ll_lat, ll_lon, lr_lat, lr_lon, lon_system, max_lat, min_lat, resolution, sample_offset, scale, ulcorner_x, ulcorner_y, ul_lat, ul_lon, ur_lat, ur_lon, west_lon, 
-              lines, samples, bands, offset_value, scaling_factor 
-       from thmteam.stage s, thmteam.projgeom p 
+create view thmteam.themis_proj_details as
+       select s.file_id AS file_id, stage, location,
+              s.projection, ctr_lat, ctr_lon, dn_avg, dn_ignore, dn_min, dn_max, east_lon, line_offset, ll_lat, ll_lon, lr_lat, lr_lon, lon_system, max_lat, min_lat, resolution, sample_offset, scale, ulcorner_x, ulcorner_y, ul_lat, ul_lon, ur_lat, ur_lon, west_lon,
+              lines, samples, bands, offset_value, scaling_factor
+       from thmteam.stage s, thmteam.projgeom p
        where s.file_id=p.file_id and s.projection=p.projection and s.projection is not null;
 
 /*Attmept/Difficult to populate dn_* fields with joins
@@ -23,20 +23,17 @@ create view thmteam.themis_proj_details as
 #     , left join thmteam.irqubsci isci on s.file_id=isci.file_id, left join thmteam.vissci vsci on s.file_id=vsci.file_id and vsci.band=3
 */
 
-grant select, update, insert, delete on thmteam.themis_proj_details to thmteam_full;
-grant select on thmteam.themis_proj_details to thmteam;
-
 comment on view thmteam.themis_proj_details is 'THEMIS (TEAM) Projection meta_data used by web-based query servelet';
 comment on column thmteam.themis_proj_details is '';
 
 
-create view thmteam.details_view as 
+create view thmteam.details_view as
        select imgidx.file_id, imgidx.band_bin_band_number, imgidx.band_bin_filter_number, imgidx.calibration, imgidx.calib_flag_temp, imgidx.orbit, imgidx.core_items, imgidx.description, imgidx.detector_id, imgidx.exposure_duration, imgidx.focal_plane_temperature, imgidx.frm1_charge as vis_frm1_quality, imgidx.image_duration, imgidx.image_rating, imgidx.mars_year, imgidx.maximum_brightness_temperature, imgidx.minimum_brightness_temperature, imgidx.missing_scan_lines, imgidx.perc_missing, imgidx.spacecraft_clock_start_count, imgidx.spacecraft_orientation, imgidx.spacecraft_pointing_mode, imgidx.spatial_summing, imgidx.start_time, imgidx.stop_time, imgidx.start_time_et,
 
               cast(imgidx.start_time as timestamp without time zone) as start_timestamp,
-              cast(split_part(trim(leading '(' from spacecraft_orientation),',',1) as numeric) as pitch, 
+              cast(split_part(trim(leading '(' from spacecraft_orientation),',',1) as numeric) as pitch,
               cast(split_part(spacecraft_orientation,',',2) as numeric) as roll,
-              cast(split_part(trim(trailing ')' from spacecraft_orientation),',',3) as numeric) as yaw, 
+              cast(split_part(trim(trailing ')' from spacecraft_orientation),',',3) as numeric) as yaw,
               case when (band_bin_band_number like '(1,%') then 1 else 0 end as band_1,
               case when (band_bin_band_number like '%2%') then 1 else 0 end as band_2,
               case when (band_bin_band_number like '%3%') then 1 else 0 end as band_3,
@@ -61,66 +58,62 @@ create view thmteam.details_view as
               vissci.alb_avg, vissci.alb_min, vissci.alb_max,
 
               cgeom.solar_distance, cgeom.solar_longitude, cgeom.slant_distance, cgeom.north_azimuth_angle, cgeom.line_res_km, cgeom.sample_res_km, cgeom.incidence_angle, cgeom.local_solar_time, cgeom.emission_angle, cgeom.phase_angle, cgeom.geometry_level,
-              cgeom.lat as ct_lat, cgeom.lon as ct_lon, 
-              ulgeom.lat as ul_lat, ulgeom.lon as ul_lon, 
-              urgeom.lat as ur_lat, urgeom.lon as ur_lon, 
-              llgeom.lat as ll_lat, llgeom.lon as ll_lon, 
+              cgeom.lat as ct_lat, cgeom.lon as ct_lon,
+              ulgeom.lat as ul_lat, ulgeom.lon as ul_lon,
+              urgeom.lat as ur_lat, urgeom.lon as ur_lon,
+              llgeom.lat as ll_lat, llgeom.lon as ll_lon,
               lrgeom.lat as lr_lat, lrgeom.lon as lr_lon,
 
               pgis_outline
 
-       from thmteam.stage as stage, thmteam.pgisgeom as pgis, thmteam.qubgeom as cgeom, 
-            thmteam.qubgeom as ulgeom, thmteam.qubgeom as urgeom, thmteam.qubgeom as llgeom, thmteam.qubgeom as lrgeom, 
-            thmteam.imgidx as imgidx left join thmteam.irqubsci as irsci on imgidx.file_id=irsci.file_id 
-            left join thmteam.vissci as vissci on imgidx.file_id=vissci.file_id and vissci.band=3 
+       from thmteam.stage as stage, thmteam.pgisgeom as pgis, thmteam.qubgeom as cgeom,
+            thmteam.qubgeom as ulgeom, thmteam.qubgeom as urgeom, thmteam.qubgeom as llgeom, thmteam.qubgeom as lrgeom,
+            thmteam.imgidx as imgidx left join thmteam.irqubsci as irsci on imgidx.file_id=irsci.file_id
+            left join thmteam.vissci as vissci on imgidx.file_id=vissci.file_id and vissci.band=3
 
-       where imgidx.file_id=pgis.file_id and 
-             imgidx.file_id=stage.file_id and stage.stage='EDR' and 
-             imgidx.file_id=cgeom.file_id and cgeom.point_id='CT' and cgeom.band_idx=1 and 
-             imgidx.file_id=ulgeom.file_id and ulgeom.point_id='UL' and ulgeom.band_idx=1 and 
-             imgidx.file_id=urgeom.file_id and urgeom.point_id='UR' and urgeom.band_idx=1 and 
-             imgidx.file_id=llgeom.file_id and llgeom.point_id='LL' and llgeom.band_idx=1 and 
+       where imgidx.file_id=pgis.file_id and
+             imgidx.file_id=stage.file_id and stage.stage='EDR' and
+             imgidx.file_id=cgeom.file_id and cgeom.point_id='CT' and cgeom.band_idx=1 and
+             imgidx.file_id=ulgeom.file_id and ulgeom.point_id='UL' and ulgeom.band_idx=1 and
+             imgidx.file_id=urgeom.file_id and urgeom.point_id='UR' and urgeom.band_idx=1 and
+             imgidx.file_id=llgeom.file_id and llgeom.point_id='LL' and llgeom.band_idx=1 and
              imgidx.file_id=lrgeom.file_id and lrgeom.point_id='LR' and lrgeom.band_idx=1;
 
-grant select, update, insert, delete on thmteam.details_view to thmteam_full;
-grant select on thmteam.details_view to mars;
-/*grant select on thmteam.details_view to thmteam;
-  grant select on thmteam.details_view to themisteam; */
 
 comment on view thmteam.details_view is 'THEMIS (team) staging for Image meta-data transferred to themis_details';
 /*comment on column thmteam.details_view is '';*/
 
 
 create table thmteam.themis_details (file_id varchar(9) primary key,
-                                  band_bin_band_number varchar(80), 
-                                  band_bin_filter_number varchar(80), 
-                                  calibration smallint, 
-                                  calib_flag_temp real, 
+                                  band_bin_band_number varchar(80),
+                                  band_bin_filter_number varchar(80),
+                                  calibration smallint,
+                                  calib_flag_temp real,
                                   orbit integer,
-                                  core_items varchar(40), 
-                                  description text, 
-                                  detector_id varchar(3), 
-                                  exposure_duration double precision, 
-                                  focal_plane_temperature double precision, 
-                                  vis_frm1_quality smallint, 
-                                  image_duration numeric(7,3), 
-                                  image_rating smallint, 
-                                  mars_year integer, 
-                                  maximum_brightness_temperature double precision, 
-                                  minimum_brightness_temperature double precision, 
-                                  missing_scan_lines integer, 
-                                  perc_missing real, 
-                                  spacecraft_clock_start_count varchar(14), 
-                                  spacecraft_orientation varchar(16), 
-                                  spacecraft_pointing_mode varchar(50), 
-                                  spatial_summing integer, 
-                                  start_time varchar(24), 
-                                  stop_time varchar(24), 
+                                  core_items varchar(40),
+                                  description text,
+                                  detector_id varchar(3),
+                                  exposure_duration double precision,
+                                  focal_plane_temperature double precision,
+                                  vis_frm1_quality smallint,
+                                  image_duration numeric(7,3),
+                                  image_rating smallint,
+                                  mars_year integer,
+                                  maximum_brightness_temperature double precision,
+                                  minimum_brightness_temperature double precision,
+                                  missing_scan_lines integer,
+                                  perc_missing real,
+                                  spacecraft_clock_start_count varchar(14),
+                                  spacecraft_orientation varchar(16),
+                                  spacecraft_pointing_mode varchar(50),
+                                  spatial_summing integer,
+                                  start_time varchar(24),
+                                  stop_time varchar(24),
                                   start_time_et double precision,
                                   start_timestamp timestamp without time zone,
-                                  pitch numeric, 
+                                  pitch numeric,
                                   roll numeric,
-                                  yaw numeric, 
+                                  yaw numeric,
                                   band_1 integer,
                                   band_2 integer,
                                   band_3 integer,
@@ -133,7 +126,7 @@ create table thmteam.themis_details (file_id varchar(9) primary key,
                                   band_10 integer,
                                   stagelist varchar(255),
                                   bands integer,
-                                  lines integer, 
+                                  lines integer,
                                   samples integer,
                                   product_modification_date varchar(24),
                                   release_id varchar(4),
@@ -141,80 +134,78 @@ create table thmteam.themis_details (file_id varchar(9) primary key,
                                   mola_avg double precision,
                                   mola_max double precision,
                                   mola_min double precision,
-                                  mola_sigma double precision, 
-                                  saturated double precision, 
-                                  surf_pressure double precision, 
-                                  surf_temp_atm real, 
-                                  surf_temp_avg double precision, 
-                                  surf_temp_max double precision, 
-                                  surf_temp_min double precision, 
-                                  tau_dust_avg double precision, 
-                                  tau_dust_max double precision, 
-                                  tau_dust_min double precision, 
-                                  tau_dustscaled double precision, 
-                                  tau_ice_avg double precision, 
-                                  tau_ice_max double precision, 
-                                  tau_ice_min double precision, 
-                                  tau_rms real, 
-                                  tes_dust_avg double precision, 
-                                  tes_dust_max double precision, 
-                                  tes_dust_min double precision, 
-                                  tes_dust_sigma double precision, 
-                                  tes_emiss3 double precision, 
-                                  tes_emiss4 double precision, 
-                                  tes_emiss5 double precision, 
-                                  tes_emiss6 double precision, 
-                                  tes_emiss7 double precision, 
-                                  tes_emiss8 double precision, 
-                                  tes_ra_avg double precision, 
-                                  tes_ra_max double precision, 
-                                  tes_ra_min double precision, 
-                                  tes_ra_pix integer, 
-                                  tes_ra_sigma double precision, 
-                                  tes_tau_dust double precision, 
-                                  tes_tau_ice double precision, 
-                                  tes_ti_avg double precision, 
-                                  tes_ti_max double precision, 
-                                  tes_ti_min double precision, 
-                                  tes_ti_sigma double precision, 
-                                  tes_b10_temp double precision, 
-                                  thm_b10_temp double precision, 
-                                  ti_deltat real, 
-                                  ti_avg real, 
-                                  ti_max real, 
-                                  ti_min real, 
+                                  mola_sigma double precision,
+                                  saturated double precision,
+                                  surf_pressure double precision,
+                                  surf_temp_atm real,
+                                  surf_temp_avg double precision,
+                                  surf_temp_max double precision,
+                                  surf_temp_min double precision,
+                                  tau_dust_avg double precision,
+                                  tau_dust_max double precision,
+                                  tau_dust_min double precision,
+                                  tau_dustscaled double precision,
+                                  tau_ice_avg double precision,
+                                  tau_ice_max double precision,
+                                  tau_ice_min double precision,
+                                  tau_rms real,
+                                  tes_dust_avg double precision,
+                                  tes_dust_max double precision,
+                                  tes_dust_min double precision,
+                                  tes_dust_sigma double precision,
+                                  tes_emiss3 double precision,
+                                  tes_emiss4 double precision,
+                                  tes_emiss5 double precision,
+                                  tes_emiss6 double precision,
+                                  tes_emiss7 double precision,
+                                  tes_emiss8 double precision,
+                                  tes_ra_avg double precision,
+                                  tes_ra_max double precision,
+                                  tes_ra_min double precision,
+                                  tes_ra_pix integer,
+                                  tes_ra_sigma double precision,
+                                  tes_tau_dust double precision,
+                                  tes_tau_ice double precision,
+                                  tes_ti_avg double precision,
+                                  tes_ti_max double precision,
+                                  tes_ti_min double precision,
+                                  tes_ti_sigma double precision,
+                                  tes_b10_temp double precision,
+                                  thm_b10_temp double precision,
+                                  ti_deltat real,
+                                  ti_avg real,
+                                  ti_max real,
+                                  ti_min real,
                                   undersaturated double precision,
                                   tes_alb_avg double precision,
                                   tes_alb_min double precision,
                                   tes_alb_max double precision,
                                   tes_alb_sigma double precision,
-                                  alb_avg double precision, 
-                                  alb_min double precision, 
+                                  alb_avg double precision,
+                                  alb_min double precision,
                                   alb_max double precision,
-                                  solar_distance double precision, 
-                                  solar_longitude double precision, 
-                                  slant_distance double precision, 
-                                  north_azimuth_angle double precision, 
-                                  line_res_km double precision, 
-                                  sample_res_km double precision, 
-                                  incidence_angle double precision, 
-                                  local_solar_time double precision, 
-                                  emission_angle double precision, 
-                                  phase_angle double precision, 
+                                  solar_distance double precision,
+                                  solar_longitude double precision,
+                                  slant_distance double precision,
+                                  north_azimuth_angle double precision,
+                                  line_res_km double precision,
+                                  sample_res_km double precision,
+                                  incidence_angle double precision,
+                                  local_solar_time double precision,
+                                  emission_angle double precision,
+                                  phase_angle double precision,
                                   geometry_level varchar(3),
                                   ct_lat double precision,
-                                  ct_lon double precision, 
-                                  ul_lat double precision, 
-                                  ul_lon double precision, 
-                                  ur_lat double precision, 
-                                  ur_lon double precision, 
-                                  ll_lat double precision, 
-                                  ll_lon double precision, 
-                                  lr_lat double precision, 
+                                  ct_lon double precision,
+                                  ul_lat double precision,
+                                  ul_lon double precision,
+                                  ur_lat double precision,
+                                  ur_lon double precision,
+                                  ll_lat double precision,
+                                  ll_lon double precision,
+                                  lr_lat double precision,
                                   lr_lon double precision,
-                                  pgis_outline geometry,
-             constraint tdetfid_fk foreign key (file_id) references thmteam.status (file_id) on delete NO ACTION on update NO ACTION)
-             inherits (reference.insupd_time);
+                                  pgis_outline geometry);
 
 create index tdet_Iorb on thmteam.themis_details (orbit);
 create index tdet_Idetid on thmteam.themis_details (detector_id);
@@ -281,28 +272,15 @@ create index tdet_Isoltime on thmteam.themis_details (local_solar_time);
 create index tdet_Iemsang on thmteam.themis_details (emission_angle);
 create index tdet_Ireskm on thmteam.themis_details (line_res_km);
 
-create trigger insert_timestamp before insert on thmteam.themis_details for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmteam.themis_details for each row execute procedure update_timestamp();
-
-grant select, update, insert, delete on thmteam.themis_details to thmteam_full;
-grant select on thmteam.themis_details to thmteam;
-grant select on thmteam.themis_details to mars;
-
 comment on table thmteam.themis_details is 'THEMIS (team) Image meta-data used by web-based query servelet';
 #comment on column thmteam.themis_details. is 'PK- ';
 #comment on column thmteam.themis_details. is '';
 #
 #
-#/*Glossary updates*/
-#insert into reference.table_glossary (schema_name,table_name,type,description,access) values 
-#  ('team','themis_details',type,description,access);
-#insert into reference.glossary (schema_name,table_name,field_name,pkey,description,default_value,value_type,source) values 
-#  ('team','themis_details',field_name,pkey,description,default_value,value_type,source);
-#
 
 
 
-/*Notes: 
+/*Notes:
   - explicit selection on {stage='EDR'}
   - implicit selection on min(status)=~DOWNLINKED~ images due to join on stage table
   - implicit selection on {substring(file_id,1,1) ~ [IV]} due to join on pgisgeom table
@@ -337,14 +315,12 @@ comment on table thmteam.themis_details is 'THEMIS (team) Image meta-data used b
        band_bin_filter_number	-> new field added
        geometry_level           -> new GEOM field added
        solar_distance           -> new GEOM field added
-       new INDEX fields 	-> { core_items, calib_flag_temp, focal_plane_temperature, vis_frm1_quality, exposure_duration, 
-                                     missing_scan_lines, maximum_brightness_temperature, minimum_brightness_temperature } 
-       new IRSCI fields 	-> { mola_avg, mola_sigma, surf_pressure, surf_temp_atm, surf_temp_avg, tau_dustscaled, tau_rms, 
-                                     tes_alb_[avg,min,max,sigma],tes_dust_[avg,min,max,sigma], tes_emiss[3-8], 
+       new INDEX fields 	-> { core_items, calib_flag_temp, focal_plane_temperature, vis_frm1_quality, exposure_duration,
+                                     missing_scan_lines, maximum_brightness_temperature, minimum_brightness_temperature }
+       new IRSCI fields 	-> { mola_avg, mola_sigma, surf_pressure, surf_temp_atm, surf_temp_avg, tau_dustscaled, tau_rms,
+                                     tes_alb_[avg,min,max,sigma],tes_dust_[avg,min,max,sigma], tes_emiss[3-8],
                                      tes_ra_[min,max,avg,sigma], tes_ra_pix, tes_tau_dust, tes_tau_ice, tes_ti_[avg,min,max,sigma],
                                      ti_deltat, ti_avg, tes_b10_temp, thm_b10_temp, dropouts, saturated, undersaturated }
        new VISSCI fields        -> { alb_avg, alb_min, alb_max, tes_alb_[avg,min,max,sigma] }
        new PGIS field   	-> pgis_outline; validated close match with themis_pgis_webmap.p field
-*/ 
-
-
+*/

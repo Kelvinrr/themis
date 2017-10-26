@@ -1,12 +1,12 @@
 /*10/2010: mars.thmwork.irsci
-  11/09/10: added FK=status.file_id 
-  01/09/14: split into irsci {irfrmsci + irqubsci} 
+  11/09/10: added FK=status.file_id
+  01/09/14: split into irsci {irfrmsci + irqubsci}
   02/2014: idexes to improve web-servelet performance
   10/2017: CEdwards sync'ing to NAU
 */
 /*  SCHEMA | IRSCI | IRFRMSCI | IRQUBSCI
    --------+-------+----------+---------
-   thmwork | table |  view    |  view 
+   thmwork | table |  view    |  view
    thmteam | view  |  table   |  table
    thmpub  | view  |  table   |  table
 */
@@ -73,10 +73,7 @@ create table thmwork.irqubsci (file_id varchar(9),
                             ti_avg real,
                             ti_max real,
                             ti_min real,
-                            undersaturated double precision,         
-             constraint irqsci_pk primary key (file_id, framelet_id),
-             constraint irqscifid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
-             inherits (reference.insupd_time);
+                            undersaturated double precision);
 
 create trigger insert_timestamp before insert on thmwork.irqubsci for each row execute procedure insert_timestamp();
 create trigger update_timestamp before update on thmwork.irqubsci for each row execute procedure update_timestamp();
@@ -241,14 +238,7 @@ create table thmwork.irfrmsci (file_id varchar(9),
                             ti_avg real,
                             ti_max real,
                             ti_min real,
-                            undersaturated double precision,         
-             constraint irfsci_pk primary key (file_id, framelet_id),
-             constraint irfscifid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
-             inherits (reference.insupd_time);
-
-create trigger insert_timestamp before insert on thmwork.irfrmsci for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.irfrmsci for each row execute procedure update_timestamp();
-
+                            undersaturated double precision);
 
 comment on table thmwork.irfrmsci is 'THEMIS (working) IR image derived science values table for all framelets';
 comment on column thmwork.irfrmsci.file_id is 'PK/FK- Unique identification of THEMIS image';
@@ -330,4 +320,3 @@ create view thmteam.irsci as select * from thmpub.irfrmsci;
 comment on view thmteam.irsci is 'THEMIS (team) View same as irfrmsci';
 create view thmpub.irsci as select * from thmpub.irfrmsci;
 comment on view thmpub.irsci is 'THEMIS (team) View same as irfrmsci';
-

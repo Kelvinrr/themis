@@ -5,12 +5,7 @@
   10/2017: CEdwards sync'ing to NAU
 */
 
-#grant select, update, insert, delete on thmwork.thm3_qube to thmwork_full;
-#grant select, update, insert, delete on thmpub.thm3_qube to thmpub_full;
-#grant select, update, insert, delete on thmteam.thm3_qube to thmteam_full;
-#grant select on thmwork.thm3_qube to thmwork;
-
-create view thmwork.thm3_qube as 
+create view thmwork.thm3_qube as
        select imgproc.file_id,
               imgproc.assoc_image,
               imgidx.calib_flag_dn1,
@@ -44,7 +39,7 @@ create view thmwork.thm3_qube as
               imgproc.yaw
        from thmwork.imgproc as imgproc, thmwork.imgidx as imgidx, thmwork.qubgeom as qubgeom, thmwork.status as status
        where imgproc.file_id=imgidx.file_id and imgproc.file_id=qubgeom.file_id and
-             imgproc.file_id=status.file_id and 
+             imgproc.file_id=status.file_id and
              qubgeom.point_id='CT' and qubgeom.band_idx=1;
 
 
@@ -57,7 +52,7 @@ grant select on thmwork.thm3_qube to thmwork;
 
 /*10/2010: mars.thmwork.thm3_header*/
 
-create view thmwork.thm3_header as 
+create view thmwork.thm3_header as
        select imgidx.file_id,
               imgidx.band_bin_band_number,
               imgidx.band_bin_filter_number,
@@ -96,14 +91,10 @@ create view thmwork.thm3_header as
 
 
 comment on view thmwork.thm3_header is 'THEMIS (team) View approximately reproduces original themis3.header table';
-/*comment on column thmwork.thm3_header is '';*/
-
-grant select, update, insert, delete on thmwork.thm3_header to thmwork_full;
-grant select on thmwork.thm3_header to thmwork;
 
 /*10/2010: mars.thmwork.thm3_quality*/
 
-create view thmwork.thm3_quality as 
+create view thmwork.thm3_quality as
        select imgproc.file_id,
               imgidx.calibration,
               irsci.THM_b10_temp,
@@ -119,23 +110,12 @@ create view thmwork.thm3_quality as
               imgproc.shutter_rms,
               imgproc.shutter_time
 
-       from thmwork.imgproc as imgproc, thmwork.imgidx as imgidx, thmwork.status as status 
-             left join thmwork.irqubsci as irsci on status.file_id=irsci.file_id 
+       from thmwork.imgproc as imgproc, thmwork.imgidx as imgidx, thmwork.status as status
+             left join thmwork.irqubsci as irsci on status.file_id=irsci.file_id
              /*and irsci.framelet_id=0 (2014: implicit)*/
        where imgproc.file_id=imgidx.file_id and
              imgproc.file_id=status.file_id;
-             
+
 
 
 comment on view thmwork.thm3_quality is 'THEMIS (team) View approximately reproduces original themis3.quality table';
-/*comment on column thmwork.thm3_quality is '';*/
-
-grant select, update, insert, delete on thmwork.thm3_quality to thmwork_full;
-grant select on thmwork.thm3_quality to thmwork;
-
-/*Maintain public selection*/
-grant select on thmpub.thm3_qube to mars;
-grant select on thmpub.thm3_header to mars;
-grant select on thmpub.thm3_quality to mars;
-
-

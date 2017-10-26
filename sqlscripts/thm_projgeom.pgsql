@@ -1,5 +1,5 @@
 /* 10/2010: mars.thmwork.projgeom
-  11/09/10: added FK=status.file_id 
+  11/09/10: added FK=status.file_id
   06/20/11: reworked PK; added source_band
   02/12/13: added columns for ISIS3 processing parameters
   04/24/13: added UpperLeft corners
@@ -41,13 +41,7 @@ create table thmwork.projgeom (file_id varchar(9),
                                proc_param text,
                                comments text,
                                visis smallint,
-                               unzip_bytes bigint,
-             constraint projgeom_pk primary key (file_id, projection),
-             constraint pgeomfid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
-             inherits (reference.insupd_time);
-
-create trigger insert_timestamp before insert on thmwork.projgeom for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.projgeom for each row execute procedure update_timestamp();
+                               unzip_bytes bigint);
 
 create index pgeom_Iclat on thmwork.projgeom (ctr_lat);
 create index pgeom_Iclon on thmwork.projgeom (ctr_lon);
@@ -60,13 +54,8 @@ create index pgeom_Iur on thmwork.projgeom (ur_lat,ur_lon);
 create index pgeom_Ill on thmwork.projgeom (ll_lat,ll_lon);
 create index pgeom_Ilr on thmwork.projgeom (lr_lat,lr_lon);
 
-grant select, update, insert, delete on thmwork.projgeom to thmwork_full;
-grant select on thmwork.projgeom to thmwork;
-grant select on thmwork.projgeom to themisteam;
-grant select on thmwork.projgeom to themispublic;
-
 /* 6/2011: Not best solution for needs
-   select AddGeometryColumn('thmwork','projgeom','poly_outline',4326,'POLYGON',2); 
+   select AddGeometryColumn('thmwork','projgeom','poly_outline',4326,'POLYGON',2);
    comment on column thmwork.projgeom.poly_outline is 'pGIS image outline: starts at NW corner and traces counter-clockwise around corner points'; */
 
 
@@ -91,7 +80,7 @@ comment on column thmwork.projgeom.lon_system is 'Longitude system of this proje
 
 comment on column thmwork.projgeom.param_status is 'Describes status of projection parameters of this record; given as STATUS:yyyy-dd-mmThh:mm:ss';
 comment on column thmwork.projgeom.geom_param  is 'Geometry Kernel parameter esp for use with th_*I3geo.sh; possible values: PREDICTED, RECONSTRUCTED, NADIR, ROTO';
-comment on column thmwork.projgeom.out_param  is 'Output modification parameters esp for use with th_*I3geo.sh; given as list pf PARAM=value'; 
+comment on column thmwork.projgeom.out_param  is 'Output modification parameters esp for use with th_*I3geo.sh; given as list pf PARAM=value';
 comment on column thmwork.projgeom.map_param  is 'MapTemplate parameters esp for use with th_*I3geo.sh; given as list of x=# or a maptemplate_filename';
 comment on column thmwork.projgeom.proc_param is 'Processing parameters esp for use with th_*I3geo.sh; given as list of PARAM=value';
 comment on column thmwork.projgeom.comments is 'Comments about projection issues regarding this image';
@@ -114,4 +103,3 @@ comment on column thmwork.projgeom.lr_lon is 'LowerRight longitude of projected 
 /* geom_param =  PREDICTED|RECONSTRUCTED|NADIR|ROTO ?explicit restriction?*/
 /* out_param =   (SHORT=1 GZIP=1 BAND=#,#) */
 /* map_param =   NOTE defaults used for unlisted parameters; (p=# r=# l=# x=# y=# m=# o=# s=#)|maptemplate_filename */
-

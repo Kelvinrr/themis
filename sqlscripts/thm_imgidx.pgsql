@@ -55,15 +55,8 @@ create table thmwork.imgidx (file_id varchar(9) primary key,
                             stop_time_et double precision,
                             time_delay_integration_flag varchar(10) constraint tdi_list check (time_delay_integration_flag in ('ENABLED','DISABLED')),
                             tlm_rows smallint,
-                            uncorrected_sclk_start_count double precision,
-              constraint iidxfid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action,
-              constraint iidxstage_fk foreign key (final_stage) references reference.product_stage (stage) on delete no action on update no action,
-              constraint imgrating_fk foreign key (image_rating) references reference.img_rating (image_rating) on delete no action on update no action ) 
-             inherits (reference.insupd_time);
-
-create trigger insert_timestamp before insert on thmwork.imgidx for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.imgidx for each row execute procedure update_timestamp();
-
+                            uncorrected_sclk_start_count double precision);
+                            
 create index iidx_Iorb on thmwork.imgidx (orbit);
 create index iidx_Idetid on thmwork.imgidx (detector_id);
 create index iidx_Isum on thmwork.imgidx (spatial_summing);

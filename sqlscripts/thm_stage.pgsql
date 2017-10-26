@@ -49,15 +49,8 @@ create table thmwork.stage (file_id varchar(9),
                             sfdu2cube_version_id varchar(4),
                             source_note varchar(255),
                             source_version_id varchar(4),
-                            version_id varchar(4),
-             constraint stage_pk primary key (file_id, stage),
-             constraint stagefid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
-             constraint stagestg_fk foreign key (stage) references reference.product_stage (stage) on delete no action on update no action)
-             inherits (reference.insupd_time);
-
-create trigger insert_timestamp before insert on thmwork.stage for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.stage for each row execute procedure update_timestamp();
-
+                            version_id varchar(4));
+                            
 create index stg_Iband on thmwork.stage (bands);
 create index stg_Irelid on thmwork.stage (release_id);
 

@@ -18,12 +18,7 @@ create table thmwork.status (file_id varchar(9) primary key,
                              BWS2 smallint,
                              RGB smallint,
                              product_cnt smallint,
-                             processing_note text)
-             inherits (reference.insupd_time);
-
-create trigger insert_timestamp before insert on thmwork.status for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.status for each row execute procedure update_timestamp();
-
+                             processing_note text);
 
 comment on table thmwork.status is 'THEMIS (working) Image product availability table';
 comment on column thmwork.status.file_id is 'PK/FK- Unique identification of THEMIS image';
@@ -47,13 +42,6 @@ comment on column thmwork.status.status is 'Status of image: PLANNED, UPLINKED, 
 comment on column thmwork.status.processing_note is 'Comments and anomalies encountered during routine processing of this image';
 
 
-/*  Access privileges       */
-grant select, update, insert, delete on thmwork.status to thmwork_full;
-grant select, update, insert, delete on thmteam.status to thmteam_full;
-grant select, update, insert, delete on thmpub.status to thmpub_full;
-grant select on thmwork.status to thmwork;
-
-
 /* Watch foreign keys:
              constraint qgeomfid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
              constraint fgeomfid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
@@ -67,4 +55,3 @@ grant select on thmwork.status to thmwork;
      thm3_qube
      thm3_quality
 */
-

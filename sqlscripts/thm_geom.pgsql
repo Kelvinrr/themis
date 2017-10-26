@@ -28,15 +28,7 @@ create table thmwork.qubgeom (file_id varchar(9),
                               slant_distance double precision,
                               solar_distance double precision,
                               solar_longitude double precision,
-                              sun_azimuth double precision,
-             constraint qgeom_pk primary key (file_id, point_id, band_idx, geometry_level),
-             constraint qgeomfid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
-             inherits (reference.insupd_time);
-
-create trigger insert_timestamp before insert on thmwork.qubgeom for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.qubgeom for each row execute procedure update_timestamp();
-grant select, update, insert, delete on thmwork.qubgeom to thmwork_full;
-grant select on thmwork.qubgeom to thmwork;
+                              sun_azimuth double precision);
 
 create index qgeom_Ilat on thmwork.qubgeom (lat);
 create index qgeom_Ilon on thmwork.qubgeom (lon);
@@ -101,15 +93,7 @@ create table thmwork.frmgeom (file_id varchar(9),
                               solar_distance double precision,
                               solar_longitude double precision,
                               sun_azimuth double precision,
-                              poly_idx integer,
-             constraint fgeom_pk primary key (file_id, framelet_id, point_id, band_idx, geometry_level),
-             constraint fgeomfid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
-             inherits (reference.insupd_time);
-
-create trigger insert_timestamp before insert on thmwork.frmgeom for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.frmgeom for each row execute procedure update_timestamp();
-grant select, update, insert, delete on thmwork.frmgeom to thmwork_full;
-grant select on thmwork.frmgeom to thmwork;
+                              poly_idx integer);
 
 comment on table thmwork.frmgeom is 'THEMIS (working) Image geometry table with framelet details';
 comment on column thmwork.frmgeom.file_id is 'PK/FK- Unique identification of THEMIS image';
@@ -143,11 +127,8 @@ comment on column thmwork.frmgeom.pixel_y is 'Line location of this point id in 
 INSERT INTO thmwork.qubgeom_new (file_id, point_id, band_idx, geometry_level, aspect_ratio, band, emission_angle, incidence_angle, lat, line_res_km, local_solar_time, lon, north_azimuth_angle, phase_angle, sample_res_km, slant_distance, solar_longitude, sun_azimuth)
  SELECT file_id, point_id, band_idx, geometry_level, aspect_ratio, band, emission_angle, incidence_angle, lat, line_res_km, local_solar_time, lon, north_azimuth_angle, phase_angle, sample_res_km, slant_distance, solar_longitude, sun_azimuth FROM thmwork.qubgeom ;
 
-INSERT INTO thmwork.frmgeom_new 
-(file_id, framelet_id, point_id, band_idx, geometry_level, aspect_ratio, band, emission_angle, incidence_angle, lat, line_res_km, local_solar_time, lon, north_azimuth_angle, phase_angle, sample_res_km, slant_distance, solar_longitude, sun_azimuth, poly_idx) 
+INSERT INTO thmwork.frmgeom_new
+(file_id, framelet_id, point_id, band_idx, geometry_level, aspect_ratio, band, emission_angle, incidence_angle, lat, line_res_km, local_solar_time, lon, north_azimuth_angle, phase_angle, sample_res_km, slant_distance, solar_longitude, sun_azimuth, poly_idx)
  SELECT file_id, framelet_id, point_id, band_idx, geometry_level, aspect_ratio, band, emission_angle, incidence_angle, lat, line_res_km, local_solar_time, lon, north_azimuth_angle, phase_angle, sample_res_km, slant_distance, solar_longitude, sun_azimuth, poly_idx FROM thmwork.frmgeom ;
 
 */
-
-
-

@@ -1,6 +1,6 @@
 /*10/2010: mars.thmwork.imgproc*/
-/*11/09/10: Moved status & proc_note to thmwork.status; added FK=status.file_id 
-  05/09/12: Added despeck for VIS processing 
+/*11/09/10: Moved status & proc_note to thmwork.status; added FK=status.file_id
+  05/09/12: Added despeck for VIS processing
   10/03/13: roll/pitch/yaw default=0
   01/07/14: line_var
   11/04/14: feather changed to orb_node
@@ -43,12 +43,7 @@ create table thmwork.imgproc (file_id varchar(9) primary key,
                               shutter_time double precision,
                               Summing_cmd integer,
                               TI_note smallint,
-                              yaw integer default 0,
-             constraint iprocfid_fk foreign key (file_id) references thmwork.status (file_id) on delete no action on update no action)
-             inherits (reference.insupd_time);
-
-create trigger insert_timestamp before insert on thmwork.imgproc for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.imgproc for each row execute procedure update_timestamp();
+                              yaw integer default 0);
 
 comment on table thmwork.imgproc is 'THEMIS (working) Image processing information table';
 comment on column thmwork.imgproc.file_id is 'PK/FK- Unique identification of THEMIS image';
