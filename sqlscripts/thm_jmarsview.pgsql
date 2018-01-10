@@ -10,24 +10,24 @@
   10/2017: CEdwards sync'ing to NAU
 */
 
-create view thmteam.themis_proj_details as
+create view thmwork.themis_proj_details as
        select s.file_id AS file_id, stage, location,
               s.projection, ctr_lat, ctr_lon, dn_avg, dn_ignore, dn_min, dn_max, east_lon, line_offset, ll_lat, ll_lon, lr_lat, lr_lon, lon_system, max_lat, min_lat, resolution, sample_offset, scale, ulcorner_x, ulcorner_y, ul_lat, ul_lon, ur_lat, ur_lon, west_lon,
               lines, samples, bands, offset_value, scaling_factor
-       from thmteam.stage s, thmteam.projgeom p
+       from thmwork.stage s, thmwork.projgeom p
        where s.file_id=p.file_id and s.projection=p.projection and s.projection is not null;
 
 /*Attmept/Difficult to populate dn_* fields with joins
 #             , (case when file_id~'I%' then isci.maximum_brightness_temperature when file_id~'V%' then vsci.alb_max end) as dnmax,
 #              (case when file_id~'I%' then isci.minimum_brightness_temperature when file_id~'V%' then vsci.alb_min end) as dnmin
-#     , left join thmteam.irqubsci isci on s.file_id=isci.file_id, left join thmteam.vissci vsci on s.file_id=vsci.file_id and vsci.band=3
+#     , left join thmwork.irqubsci isci on s.file_id=isci.file_id, left join thmwork.vissci vsci on s.file_id=vsci.file_id and vsci.band=3
 */
 
-comment on view thmteam.themis_proj_details is 'THEMIS (TEAM) Projection meta_data used by web-based query servelet';
-comment on column thmteam.themis_proj_details is '';
+comment on view thmwork.themis_proj_details is 'THEMIS (TEAM) Projection meta_data used by web-based query servelet';
+comment on column thmwork.themis_proj_details is '';
 
 
-create view thmteam.details_view as
+create view thmwork.details_view as
        select imgidx.file_id, imgidx.band_bin_band_number, imgidx.band_bin_filter_number, imgidx.calibration, imgidx.calib_flag_temp, imgidx.orbit, imgidx.core_items, imgidx.description, imgidx.detector_id, imgidx.exposure_duration, imgidx.focal_plane_temperature, imgidx.frm1_charge as vis_frm1_quality, imgidx.image_duration, imgidx.image_rating, imgidx.mars_year, imgidx.maximum_brightness_temperature, imgidx.minimum_brightness_temperature, imgidx.missing_scan_lines, imgidx.perc_missing, imgidx.spacecraft_clock_start_count, imgidx.spacecraft_orientation, imgidx.spacecraft_pointing_mode, imgidx.spatial_summing, imgidx.start_time, imgidx.stop_time, imgidx.start_time_et,
 
               cast(imgidx.start_time as timestamp without time zone) as start_timestamp,
@@ -45,7 +45,7 @@ create view thmteam.details_view as
               case when (band_bin_band_number like '%9%') then 1 else 0 end as band_9,
               case when (band_bin_band_number like '%10)') then 1 else 0 end as band_10,
 
-              array(select stage from thmteam.stage S where imgidx.file_id=S.file_id order by S.stage) stagelist,
+              array(select stage from thmwork.stage S where imgidx.file_id=S.file_id order by S.stage) stagelist,
               stage.bands, stage.lines, stage.samples, stage.product_creation_time as product_modification_date, stage.release_id,
 
               irsci.dropouts,irsci.mola_avg, irsci.mola_max, irsci.mola_min, irsci.mola_sigma, irsci.saturated, irsci.surf_pressure, irsci.surf_temp_atm, irsci.surf_temp_avg, irsci.surf_temp_max, irsci.surf_temp_min, irsci.tau_dust as tau_dust_avg, irsci.tau_dust_max, irsci.tau_dust_min, irsci.tau_dustscaled, irsci.tau_ice as tau_ice_avg, irsci.tau_ice_max, irsci.tau_ice_min, irsci.tau_rms, irsci.tes_dust_avg, irsci.tes_dust_max, irsci.tes_dust_min, irsci.tes_dust_sigma, irsci.tes_emiss3, irsci.tes_emiss4, irsci.tes_emiss5, irsci.tes_emiss6, irsci.tes_emiss7, irsci.tes_emiss8, irsci.tes_ra_avg, irsci.tes_ra_max, irsci.tes_ra_min, irsci.tes_ra_pix, irsci.tes_ra_sigma, irsci.tes_tau_dust, irsci.tes_tau_ice, irsci.tes_ti_avg, irsci.tes_ti_max, irsci.tes_ti_min, irsci.tes_ti_sigma, irsci.tes_b10_temp, irsci.thm_b10_temp, irsci.ti_deltat, irsci.ti_avg, irsci.ti_max, irsci.ti_min, irsci.undersaturated,
@@ -66,10 +66,10 @@ create view thmteam.details_view as
 
               pgis_outline
 
-       from thmteam.stage as stage, thmteam.pgisgeom as pgis, thmteam.qubgeom as cgeom,
-            thmteam.qubgeom as ulgeom, thmteam.qubgeom as urgeom, thmteam.qubgeom as llgeom, thmteam.qubgeom as lrgeom,
-            thmteam.imgidx as imgidx left join thmteam.irqubsci as irsci on imgidx.file_id=irsci.file_id
-            left join thmteam.vissci as vissci on imgidx.file_id=vissci.file_id and vissci.band=3
+       from thmwork.stage as stage, thmwork.pgisgeom as pgis, thmwork.qubgeom as cgeom,
+            thmwork.qubgeom as ulgeom, thmwork.qubgeom as urgeom, thmwork.qubgeom as llgeom, thmwork.qubgeom as lrgeom,
+            thmwork.imgidx as imgidx left join thmwork.irqubsci as irsci on imgidx.file_id=irsci.file_id
+            left join thmwork.vissci as vissci on imgidx.file_id=vissci.file_id and vissci.band=3
 
        where imgidx.file_id=pgis.file_id and
              imgidx.file_id=stage.file_id and stage.stage='EDR' and
@@ -80,11 +80,11 @@ create view thmteam.details_view as
              imgidx.file_id=lrgeom.file_id and lrgeom.point_id='LR' and lrgeom.band_idx=1;
 
 
-comment on view thmteam.details_view is 'THEMIS (team) staging for Image meta-data transferred to themis_details';
-/*comment on column thmteam.details_view is '';*/
+comment on view thmwork.details_view is 'THEMIS (team) staging for Image meta-data transferred to themis_details';
+/*comment on column thmwork.details_view is '';*/
 
 
-create table thmteam.themis_details (file_id varchar(9) primary key,
+create table thmwork.themis_details (file_id varchar(9) primary key,
                                   band_bin_band_number varchar(80),
                                   band_bin_filter_number varchar(80),
                                   calibration smallint,
@@ -207,76 +207,76 @@ create table thmteam.themis_details (file_id varchar(9) primary key,
                                   lr_lon double precision,
                                   pgis_outline geometry);
 
-create index tdet_Iorb on thmteam.themis_details (orbit);
-create index tdet_Idetid on thmteam.themis_details (detector_id);
-create index tdet_Isum on thmteam.themis_details (spatial_summing);
-create index tdet_Ibbbn on thmteam.themis_details (band_bin_band_number);
-create index tdet_Idesc on thmteam.themis_details (description);
-create index tdet_Imyear on thmteam.themis_details (mars_year);
-create index tdet_Istet on thmteam.themis_details (start_time_et);
-create index tdet_Istutc on thmteam.themis_details (start_time);
-create index tdet_Istsclk on thmteam.themis_details (spacecraft_clock_start_count);
-create index tdet_Irating on thmteam.themis_details (image_rating);
-create index tdet_Icalib on thmteam.themis_details (calibration);
-create index tdet_Iyrp on thmteam.themis_details (spacecraft_orientation);
-create index tdet_Iminbt on thmteam.themis_details (minimum_brightness_temperature);
-create index tdet_Imaxbt on thmteam.themis_details (maximum_brightness_temperature);
-create index tdet_Iband on thmteam.themis_details (bands);
-create index tdet_Irelid on thmteam.themis_details (release_id);
-create index tdet_Ioicea on thmteam.themis_details (tau_ice_avg);
-create index tdet_Ioiceb on thmteam.themis_details (tau_ice_min,tau_ice_max);
-create index tdet_Iodusta on thmteam.themis_details (tau_dust_avg);
-create index tdet_Iodustb on thmteam.themis_details (tau_dust_min,tau_dust_max);
-create index tdet_Imolaa on thmteam.themis_details (mola_avg);
-create index tdet_Imolab on thmteam.themis_details (mola_min,mola_max);
-create index tdet_Itia on thmteam.themis_details (ti_avg);
-create index tdet_Itib on thmteam.themis_details (ti_min,ti_max);
-create index tdet_Istempa on thmteam.themis_details (surf_temp_avg);
-create index tdet_Istempb on thmteam.themis_details (surf_temp_min,surf_temp_max);
-create index tdet_Italba on thmteam.themis_details (tes_alb_avg);
-create index tdet_Italbb on thmteam.themis_details (tes_alb_min,tes_alb_max);
-create index tdet_Itdusta on thmteam.themis_details (tes_dust_avg);
-create index tdet_Itdustb on thmteam.themis_details (tes_dust_min,tes_dust_max);
-create index tdet_Itraa on thmteam.themis_details (tes_ra_avg);
-create index tdet_Itrab on thmteam.themis_details (tes_ra_min,tes_ra_max);
-create index tdet_Ittia on thmteam.themis_details (tes_ti_avg);
-create index tdet_Ittib on thmteam.themis_details (tes_ti_min,tes_ti_max);
-create index tdet_Iemis3 on thmteam.themis_details (tes_emiss3);
-create index tdet_Iemis4 on thmteam.themis_details (tes_emiss4);
-create index tdet_Iemis5 on thmteam.themis_details (tes_emiss5);
-create index tdet_Iemis6 on thmteam.themis_details (tes_emiss6);
-create index tdet_Iemis7 on thmteam.themis_details (tes_emiss7);
-create index tdet_Iemis8 on thmteam.themis_details (tes_emiss8);
-create index tdet_Itestemp on thmteam.themis_details (tes_b10_temp);
-create index tdet_Ithmtemp on thmteam.themis_details (thm_b10_temp);
-create index tdet_Idrop on thmteam.themis_details (dropouts);
-create index tdet_Isat on thmteam.themis_details (saturated);
-create index tdet_Iusat on thmteam.themis_details (undersaturated);
-create index tdet_Iaavg on thmteam.themis_details (alb_avg);
-create index tdet_Iamin on thmteam.themis_details (alb_min);
-create index tdet_Iamax on thmteam.themis_details (alb_max);
-create index tdet_Ictlat on thmteam.themis_details (ct_lat);
-create index tdet_Ictlon on thmteam.themis_details (ct_lon);
-create index tdet_Iullat on thmteam.themis_details (ul_lat);
-create index tdet_Iullon on thmteam.themis_details (ul_lon);
-create index tdet_Iurlat on thmteam.themis_details (ur_lat);
-create index tdet_Iurlon on thmteam.themis_details (ur_lon);
-create index tdet_Illlat on thmteam.themis_details (ll_lat);
-create index tdet_Illlon on thmteam.themis_details (ll_lon);
-create index tdet_Ilrlat on thmteam.themis_details (lr_lat);
-create index tdet_Ilrlon on thmteam.themis_details (lr_lon);
-create index tdet_Isoldist on thmteam.themis_details (solar_distance);
-create index tdet_Isollon on thmteam.themis_details (solar_longitude);
-create index tdet_Iincang on thmteam.themis_details (incidence_angle);
-create index tdet_Isoltime on thmteam.themis_details (local_solar_time);
-create index tdet_Iemsang on thmteam.themis_details (emission_angle);
-create index tdet_Ireskm on thmteam.themis_details (line_res_km);
+create index tdet_Iorb on thmwork.themis_details (orbit);
+create index tdet_Idetid on thmwork.themis_details (detector_id);
+create index tdet_Isum on thmwork.themis_details (spatial_summing);
+create index tdet_Ibbbn on thmwork.themis_details (band_bin_band_number);
+create index tdet_Idesc on thmwork.themis_details (description);
+create index tdet_Imyear on thmwork.themis_details (mars_year);
+create index tdet_Istet on thmwork.themis_details (start_time_et);
+create index tdet_Istutc on thmwork.themis_details (start_time);
+create index tdet_Istsclk on thmwork.themis_details (spacecraft_clock_start_count);
+create index tdet_Irating on thmwork.themis_details (image_rating);
+create index tdet_Icalib on thmwork.themis_details (calibration);
+create index tdet_Iyrp on thmwork.themis_details (spacecraft_orientation);
+create index tdet_Iminbt on thmwork.themis_details (minimum_brightness_temperature);
+create index tdet_Imaxbt on thmwork.themis_details (maximum_brightness_temperature);
+create index tdet_Iband on thmwork.themis_details (bands);
+create index tdet_Irelid on thmwork.themis_details (release_id);
+create index tdet_Ioicea on thmwork.themis_details (tau_ice_avg);
+create index tdet_Ioiceb on thmwork.themis_details (tau_ice_min,tau_ice_max);
+create index tdet_Iodusta on thmwork.themis_details (tau_dust_avg);
+create index tdet_Iodustb on thmwork.themis_details (tau_dust_min,tau_dust_max);
+create index tdet_Imolaa on thmwork.themis_details (mola_avg);
+create index tdet_Imolab on thmwork.themis_details (mola_min,mola_max);
+create index tdet_Itia on thmwork.themis_details (ti_avg);
+create index tdet_Itib on thmwork.themis_details (ti_min,ti_max);
+create index tdet_Istempa on thmwork.themis_details (surf_temp_avg);
+create index tdet_Istempb on thmwork.themis_details (surf_temp_min,surf_temp_max);
+create index tdet_Italba on thmwork.themis_details (tes_alb_avg);
+create index tdet_Italbb on thmwork.themis_details (tes_alb_min,tes_alb_max);
+create index tdet_Itdusta on thmwork.themis_details (tes_dust_avg);
+create index tdet_Itdustb on thmwork.themis_details (tes_dust_min,tes_dust_max);
+create index tdet_Itraa on thmwork.themis_details (tes_ra_avg);
+create index tdet_Itrab on thmwork.themis_details (tes_ra_min,tes_ra_max);
+create index tdet_Ittia on thmwork.themis_details (tes_ti_avg);
+create index tdet_Ittib on thmwork.themis_details (tes_ti_min,tes_ti_max);
+create index tdet_Iemis3 on thmwork.themis_details (tes_emiss3);
+create index tdet_Iemis4 on thmwork.themis_details (tes_emiss4);
+create index tdet_Iemis5 on thmwork.themis_details (tes_emiss5);
+create index tdet_Iemis6 on thmwork.themis_details (tes_emiss6);
+create index tdet_Iemis7 on thmwork.themis_details (tes_emiss7);
+create index tdet_Iemis8 on thmwork.themis_details (tes_emiss8);
+create index tdet_Itestemp on thmwork.themis_details (tes_b10_temp);
+create index tdet_Ithmtemp on thmwork.themis_details (thm_b10_temp);
+create index tdet_Idrop on thmwork.themis_details (dropouts);
+create index tdet_Isat on thmwork.themis_details (saturated);
+create index tdet_Iusat on thmwork.themis_details (undersaturated);
+create index tdet_Iaavg on thmwork.themis_details (alb_avg);
+create index tdet_Iamin on thmwork.themis_details (alb_min);
+create index tdet_Iamax on thmwork.themis_details (alb_max);
+create index tdet_Ictlat on thmwork.themis_details (ct_lat);
+create index tdet_Ictlon on thmwork.themis_details (ct_lon);
+create index tdet_Iullat on thmwork.themis_details (ul_lat);
+create index tdet_Iullon on thmwork.themis_details (ul_lon);
+create index tdet_Iurlat on thmwork.themis_details (ur_lat);
+create index tdet_Iurlon on thmwork.themis_details (ur_lon);
+create index tdet_Illlat on thmwork.themis_details (ll_lat);
+create index tdet_Illlon on thmwork.themis_details (ll_lon);
+create index tdet_Ilrlat on thmwork.themis_details (lr_lat);
+create index tdet_Ilrlon on thmwork.themis_details (lr_lon);
+create index tdet_Isoldist on thmwork.themis_details (solar_distance);
+create index tdet_Isollon on thmwork.themis_details (solar_longitude);
+create index tdet_Iincang on thmwork.themis_details (incidence_angle);
+create index tdet_Isoltime on thmwork.themis_details (local_solar_time);
+create index tdet_Iemsang on thmwork.themis_details (emission_angle);
+create index tdet_Ireskm on thmwork.themis_details (line_res_km);
 
-comment on table thmteam.themis_details is 'THEMIS (team) Image meta-data used by web-based query servelet';
-#comment on column thmteam.themis_details. is 'PK- ';
-#comment on column thmteam.themis_details. is '';
-#
-#
+comment on table thmwork.themis_details is 'THEMIS (team) Image meta-data used by web-based query servelet';
+comment on column thmwork.themis_details. is 'PK- ';
+comment on column thmwork.themis_details. is '';
+
+
 
 
 

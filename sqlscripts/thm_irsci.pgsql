@@ -7,7 +7,7 @@
 /*  SCHEMA | IRSCI | IRFRMSCI | IRQUBSCI
    --------+-------+----------+---------
    thmwork | table |  view    |  view
-   thmteam | view  |  table   |  table
+   thmwork | view  |  table   |  table
    thmpub  | view  |  table   |  table
 */
 
@@ -74,9 +74,6 @@ create table thmwork.irqubsci (file_id varchar(9),
                             ti_max real,
                             ti_min real,
                             undersaturated double precision);
-
-create trigger insert_timestamp before insert on thmwork.irqubsci for each row execute procedure insert_timestamp();
-create trigger update_timestamp before update on thmwork.irqubsci for each row execute procedure update_timestamp();
 
 create index isci_Ioicea on thmwork.irqubsci (tau_ice);
 create index isci_Ioiceb on thmwork.irqubsci (tau_ice_min,tau_ice_max);
@@ -316,7 +313,7 @@ create view thmwork.irqubsci as select * from thmwork.irsci where framelet_id=0;
 comment on view thmwork.irqubsci is 'THEMIS (work) IR image derived science values table for framlet_id=0 - view on thmwork.irsci';
 
 /*TEAM+PUBLIC (irsci=view)*/
-create view thmteam.irsci as select * from thmpub.irfrmsci;
-comment on view thmteam.irsci is 'THEMIS (team) View same as irfrmsci';
+create view thmwork.irsci as select * from thmpub.irfrmsci;
+comment on view thmwork.irsci is 'THEMIS (team) View same as irfrmsci';
 create view thmpub.irsci as select * from thmpub.irfrmsci;
 comment on view thmpub.irsci is 'THEMIS (team) View same as irfrmsci';

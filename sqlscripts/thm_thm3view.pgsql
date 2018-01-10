@@ -46,10 +46,6 @@ create view thmwork.thm3_qube as
 comment on view thmwork.thm3_qube is 'THEMIS (team) View approximately reproduces original themis3.qube table';
 /*comment on column thmwork.thm3_qube is '';*/
 
-grant select, update, insert, delete on thmwork.thm3_qube to thmwork_full;
-grant select on thmwork.thm3_qube to thmwork;
-
-
 /*10/2010: mars.thmwork.thm3_header*/
 
 create view thmwork.thm3_header as
