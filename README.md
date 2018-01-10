@@ -1,2 +1,5 @@
 # themis
-Pythonic processing pipeline for Themis data
+
+Simple pipeline for processing overlapping Themis images.
+
+![](overlap_images.png)
