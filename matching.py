@@ -1,6 +1,12 @@
+# Deal with annoying numpy warning
+import warnings
+warnings.filterwarnings("ignore")
+
 from shapely import wkt
 import glob
 import os
+
+import argparse
 
 import autocnet
 from autocnet import CandidateGraph
@@ -23,7 +29,6 @@ from osgeo import osr
 import numpy as np
 from plio.io.io_gdal import GeoDataset
 
-# Hack to get ISIS setup in a Jupyterhub environment running as a root service
 import subprocess
 from subprocess import Popen, PIPE
 
@@ -33,6 +38,7 @@ from pysis.exceptions import ProcessError
 from plio.date import marstime
 from collections import OrderedDict
 
+import yaml
 
 record = OrderedDict({
     'file_id1' : '',
@@ -62,38 +68,54 @@ record = OrderedDict({
     'diff_stddev' : 0,
 })
 
+def run_davinci(script, infile, outfile, root_dir, args=[]):
+    command = ['davinci', '-f', '{}{}'.format(root_dir, script), 'from={}'.format(infile), 'to={}'.format(outfile)]
+    if args:
+        command.extend(args)
+    print(' '.join(command))
+    p = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    output, err = p.communicate(b"input data that is passed to subprocess' stdin")
+    rc = p.returncode
+
+    if rc != 0:
+        raise Exception('Davinci returned non-zero error code {} : {}'.format(rc, err.decode('utf-8')))
+    return output.decode('utf-8'), err.decode('utf-8')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('config', action='store', help='path to config file', default='config.yaml')
+    parser.add_argument('id1', action='store', help='Image ID for image one')
+    parser.add_argument('id2', action='store', help='Image ID for image two')
+    parser.add_argument('-c', '--config', action='store', help='path to config file', default='./config.yml')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Activates verbose output', default=False)
+    parser.add_argument('-g', '--graph', action='store_true', help='Display graphs of the data as is goes through.', default=False)
     args = parser.parse_args().__dict__
 
-    with open(arg['config'], 'r') as ymlfile:
+    with open(args['config'], 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
 
+    if args['verbose']:
+        def verboseprint(*args):
+            # Print each argument separately so caller doesn't need to
+            # stuff everything to be printed into a single string
+            import pprint
+            pp = pprint.PrettyPrinter(indent=2)
+            for arg in args:
+               pp.pprint(arg),
+            print()
+    else:
+        verboseprint = lambda *a: None      # do-nothing function
+
+    verboseprint('ARGS:', args)
+    verboseprint('CONFIG:', cfg)
+
+    # patch in davinci_bin onto run_davinci to prevent contstantly having to pass it in
+    run_davinci = lambda x, y, z=[]: run_davinci(x,y,cfg['davinci_bin'], z)
+
     # Glob the dir for a file list of the lvl 1
-    root_dir = cfg['dpath']
+    root_dir = cfg['inpath']
 
-    def run_davinci(script, infile, outfile, args=[]):
-        command = ['davinci', '-f', '{}{}'.format(root_dir, script), 'from={}'.format(infile), 'to={}'.format(outfile)]
-        if args:
-            command.extend(args)
-        print(' '.join(command))
-        p = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        output, err = p.communicate(b"input data that is passed to subprocess' stdin")
-        rc = p.returncode
-
-        if rc != 0:
-            raise Exception('Davinci returned non-zero error code {} : {}'.format(rc, err.decode('utf-8')))
-        return output.decode('utf-8'), err.decode('utf-8')
-
-    files = glob.glob(os.path.join(root_dir, '*lev1.cub'))
-
-    filid1 = os.path.basename(files[0].split('.')[0])
-    filid2 = os.path.basename(files[1].split('.')[0])
-
-    record['file_id1'] = filid1
-    record['file_id2'] = filid2
+    record['id1'] = args['id1']
+    record['id2'] = args['id2']
 
     out, err = run_davinci('thm_pre_process.dv', filid1, '{}.lev1.cub'.format(filid1))
     out, err = run_davinci('thm_pre_process.dv', filid2, '{}.lev1.cub'.format(filid2))
@@ -124,8 +146,10 @@ if __name__ == '__main__':
             print("STDOUT:", e.stdout.decode('utf-8'))
             print("STDERR:", e.stderr.decode('utf-8'))
 
+    #############################################################
 
     cg = CandidateGraph.from_filelist(files)
+
     # The range of DN values over the data is small, so the threshold for differentiating interesting features must be small.
     cg.extract_features(extractor_parameters={'contrastThreshold':0.0000000001})
     cg.match()
