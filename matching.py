@@ -40,6 +40,10 @@ from collections import OrderedDict
 
 import yaml
 
+from functools import partial
+import utils
+
+
 record = OrderedDict({
     'file_id1' : '',
     'file_id2' : '',
@@ -68,18 +72,7 @@ record = OrderedDict({
     'diff_stddev' : 0,
 })
 
-def run_davinci(script, infile, outfile, root_dir, args=[]):
-    command = ['davinci', '-f', '{}{}'.format(root_dir, script), 'from={}'.format(infile), 'to={}'.format(outfile)]
-    if args:
-        command.extend(args)
-    print(' '.join(command))
-    p = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    output, err = p.communicate(b"input data that is passed to subprocess' stdin")
-    rc = p.returncode
 
-    if rc != 0:
-        raise Exception('Davinci returned non-zero error code {} : {}'.format(rc, err.decode('utf-8')))
-    return output.decode('utf-8'), err.decode('utf-8')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -107,44 +100,17 @@ if __name__ == '__main__':
 
     verboseprint('ARGS:', args)
     verboseprint('CONFIG:', cfg)
-
     # patch in davinci_bin onto run_davinci to prevent contstantly having to pass it in
-    run_davinci = lambda x, y, z=[]: run_davinci(x,y,cfg['davinci_bin'], z)
+    run_davinci = partial(utils.run_davinci, root_dir=config['inpath'])
 
-    # Glob the dir for a file list of the lvl 1
-    root_dir = cfg['inpath']
+    files = [os.path.abspath('{}.lev1.cub'.format(id1)), os.path.abspath('{}.lev1.cub'.format(id2))]
+    img1, img2 = files
+    cubelis = '{}_{}.lis'.format(id1, id2)
 
     record['id1'] = args['id1']
     record['id2'] = args['id2']
-
-    out, err = run_davinci('thm_pre_process.dv', filid1, '{}.lev1.cub'.format(filid1))
-    out, err = run_davinci('thm_pre_process.dv', filid2, '{}.lev1.cub'.format(filid2))
-
-    files = [os.path.abspath('{}.lev1.cub'.format(filid1)), os.path.abspath('{}.lev1.cub'.format(filid2))]
-    img1, img2 = files
-
     record['img1_path'] = img1
     record['img2_path'] = img2
-
-    cubelis = '{}_{}.lis'.format(filid1, filid2)
-    with open(cubelis, 'w') as f:
-        f.write(files[0]+'\n')
-        f.write(files[1]+'\n')
-
-    # Run spiceinit and footprintint - latter helps constrain the search
-    for f in files:
-        try:
-            spiceinit(from_=f)
-        except Exception as e:
-            print('Spice Error')
-            print("STDOUT:", e.stdout.decode('utf-8'))
-            print("STDERR:", e.stderr.decode('utf-8'))
-        try:
-            footprintinit(from_=f)
-        except Exception as e:
-            print('FP Error')
-            print("STDOUT:", e.stdout.decode('utf-8'))
-            print("STDERR:", e.stderr.decode('utf-8'))
 
     #############################################################
 
