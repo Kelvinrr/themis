@@ -1,5 +1,0 @@
-
-davinci_bin : "/nfs/software/davinci_install/share/davinci/library/bin/"
-themis_root: "/home/krodriguez/jay/day/I01210009_I00849001/"
-inpath : "/data/themis"
-outpath : "/data/themis"

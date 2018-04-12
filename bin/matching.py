@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore")
 
 from shapely import wkt
 import glob
-import os
+from os import path
 
 import argparse
 
@@ -41,8 +41,9 @@ from collections import OrderedDict
 import yaml
 
 from functools import partial
-import utils
 
+from themis import utils
+from themis import config
 
 record = OrderedDict({
     'file_id1' : '',
@@ -73,49 +74,56 @@ record = OrderedDict({
 })
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('id1', action='store', help='Image ID for image one')
-    parser.add_argument('id2', action='store', help='Image ID for image two')
+    parser.add_argument('id1', action='store', help='ID for image one')
+    parser.add_argument('id2', action='store', help='ID for image two')
+
     parser.add_argument('-c', '--config', action='store', help='path to config file', default='./config.yml')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Activates verbose output', default=False)
+    parser.add_argument('-b', '--davinci_bin', help='Directory to look for davinci scripts', default=config.davinci_bin)
+    parser.add_argument('-d', '--data', help='Directory to store output', default=config.data)
     parser.add_argument('-g', '--graph', action='store_true', help='Display graphs of the data as is goes through.', default=False)
+    parser.add_argument('-v', '--verbose', action='store_true', help='Activates verbose output', default=config.verbose)
+
+    autocnet_args = parser.add_argument_group('Autocnet matching parameters')
+    autocnet_args.add_argument('--test', help='test 4 dayz', default='hi')
     args = parser.parse_args().__dict__
 
-    with open(args['config'], 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
-
-    if args['verbose']:
+    # If verbose flag is set, verboseprint will print out the info, else,
+    # it prints nothing
+    if config.verbose:
         def verboseprint(*args):
             # Print each argument separately so caller doesn't need to
             # stuff everything to be printed into a single string
-            import pprint
-            pp = pprint.PrettyPrinter(indent=2)
             for arg in args:
-               pp.pprint(arg),
-            print()
+               print(arg)
+            # print a new line for prettiness reasons
     else:
-        verboseprint = lambda *a: None      # do-nothing function
+        verboseprint = lambda *args: None      # do-nothing function
 
-    verboseprint('ARGS:', args)
-    verboseprint('CONFIG:', cfg)
-    # patch in davinci_bin onto run_davinci to prevent contstantly having to pass it in
-    run_davinci = partial(utils.run_davinci, root_dir=config['inpath'])
+    verboseprint('Configuration:')
+    for key in args.keys():
+        verboseprint('\t{} = {}'.format(key, args[key]))
 
-    files = [os.path.abspath('{}.lev1.cub'.format(id1)), os.path.abspath('{}.lev1.cub'.format(id2))]
-    img1, img2 = files
-    cubelis = '{}_{}.lis'.format(id1, id2)
+    img1_cub = path.join(args['data'], '{}.cub'.format(args['id1']))
+    img2_cub = path.join(args['data'], '{}.cub'.format(args['id2']))
+    cubelis = path.join(args['data'], '{}_{}.lis'.format(args['id1'], args['id2']))
+
+    verboseprint('Writing: {}'.format(img1_cub))
+    verboseprint('Writing: {}'.format(img2_cub))
+
+
+    # write out cubelist
+    with open(cubelis, 'w') as f:
+        f.write(img1_path + '\n')
+        f.write(img2_path + '\n')
 
     record['id1'] = args['id1']
     record['id2'] = args['id2']
-    record['img1_path'] = img1
-    record['img2_path'] = img2
+    record['img1_cub'] = img1_cub
+    record['img2_cub'] = img2_cub
 
-    #############################################################
-
-    cg = CandidateGraph.from_filelist(files)
-
+    cg = CandidateGraph.from_filelist([img1_path, img2_path])
     # The range of DN values over the data is small, so the threshold for differentiating interesting features must be small.
     cg.extract_features(extractor_parameters={'contrastThreshold':0.0000000001})
     cg.match()
