@@ -44,6 +44,7 @@ from functools import partial
 
 from themis import utils
 from themis import config
+from themis import io
 
 record = OrderedDict({
     'file_id1' : '',
@@ -111,7 +112,15 @@ if __name__ == '__main__':
 
     verboseprint('Writing: {}'.format(img1_cub))
     verboseprint('Writing: {}'.format(img2_cub))
+    verboseprint('Writing: {}'.format(cubelis))
 
+    if path.isfile(img1_cub):
+        verboseprint('File {} exists, skipping download'.format(img1_cub))
+    if path.isfile(img2_cub):
+        verboseprint('File {} exists, skipping download'.format(img2_cub))
+
+    io.init(id=id1, outfile=img1_cub)
+    io.init(id=id2, outfile=img2_cub)
 
     # write out cubelist
     with open(cubelis, 'w') as f:
@@ -123,22 +132,6 @@ if __name__ == '__main__':
     record['img1_cub'] = img1_cub
     record['img2_cub'] = img2_cub
 
-    cg = CandidateGraph.from_filelist([img1_path, img2_path])
-    # The range of DN values over the data is small, so the threshold for differentiating interesting features must be small.
-    cg.extract_features(extractor_parameters={'contrastThreshold':0.0000000001})
-    cg.match()
-
-    e = cg.edge[0][1]
-    e.symmetry_check()
-    e.ratio_check(clean_keys=['symmetry'])
-
-    cg.compute_fundamental_matrices(clean_keys=['symmetry', 'ratio'], reproj_threshold=1, mle_reproj_threshold=0.2)
-    cg.suppress(clean_keys=['fundamental'], suppression_func=suppression_funcs.distance, k=20, min_radius=10)
-
-    cnet = '{}_{}'.format(filid1, filid2)
-    cnet_file = '{}.net'.format(cnet)
-    cg.create_control_network(clean_keys=['fundamental', 'suppression'])
-    cg.to_isis(cnet)
 
     intersection = e.destination.footprint.intersection(e.source.footprint)
 

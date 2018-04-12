@@ -10,6 +10,8 @@ def compose(*functions):
 
 
 def run_davinci(script, infile=None, outfile=None, bin_dir='', args=[]):
+    '''
+    '''
     command = ['davinci', '-f', '{}{}'.format(bin_dir, script), 'from={}'.format(infile), 'to={}'.format(outfile)]
 
     # add additional positional args
